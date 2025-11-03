@@ -89,24 +89,103 @@ int createLeafNodes(int freq[]) {
 
 // Step 3: Build the encoding tree using heap operations
 int buildEncodingTree(int nextFree) {
-    // TODO:
-    // 1. Create a MinHeap object.
-    // 2. Push all leaf node indices into the heap.
-    // 3. While the heap size is greater than 1:
-    //    - Pop two smallest nodes
-    //    - Create a new parent node with combined weight
-    //    - Set left/right pointers
-    //    - Push new parent index back into the heap
-    // 4. Return the index of the last remaining node (root)
-    return -1; // placeholder
+    //similar to huffman, returns -1 if there is no letters, if there is returns 0 if only 1 leaf exist
+    //parent uses the left and right edge by convention
+    if (nextFree == 0) {
+        //no letters
+        return -1;
+    }
+    if (nextFree == 1) {
+        //only 1 letter
+        return 0;
+    }
+    MinHeap heap;
+
+    for (int i=0; i<nextFree; ++i) {
+        //adds all the leaf nodes into the heap
+        heap.push(i,weightArr);
+    }
+
+    int curr = nextFree;
+    //index where the next new node will go
+
+    while (heap.size>1 && curr<MAX_NODES) {
+        int a = heap.pop(weightArr);
+        //the smallest node
+        int b = heap.pop(weightArr);
+        //the second smallest node
+
+        //creates a new parent node that adds a and b
+        charArr[curr] = '\0';
+        //internal node
+        weightArr[curr] = weightArr[a] + weightArr[b];
+        leftArr[curr] = a;
+        //left branch ='0'
+        rightArr[curr] = b;
+        //right branch ='1'
+
+        //puts the new node back into the heap
+        heap.push(curr, weightArr);
+        curr++;
+    }
+
+    if (heap.size==1) {
+        //when the last remaining node is the root of the tree
+        return heap.pop(weightArr);
+    }
+    return -1;
+    //if something went wrong
 }
 
 // Step 4: Use an STL stack to generate codes
 void generateCodes(int root, string codes[]) {
-    // TODO:
-    // Use stack<pair<int, string>> to simulate DFS traversal.
-    // Left edge adds '0', right edge adds '1'.
-    // Record code when a leaf node is reached.
+    //each path from the root to the leaf makes a code
+    if (root==-1) {
+        //if nothing to encode it just returns
+        return;
+    }
+
+    if (leftArr[root] == -1 && rightArr[root]==-1) {
+        //only when there is one type of character it makes sure something will still print
+        codes[charArr[root]-'a'] = '0';
+        return;
+    }
+
+    stack<pair<int,string>> st;
+    st.push({root,""});
+    //stacks holds a pair
+
+    while (!st.empty()) {
+        //takes the top item from the stack
+        auto current = st.top();
+        //gives us the top element
+        st.pop();
+        //removes it
+        int node = current.first;
+        //the node index in the array
+        string path = current.second;
+        //the path
+
+        int L = leftArr[node];
+        int R = rightArr[node];
+
+        if (L==-1 && R==-1) {
+            //stores the path as the characters code
+            char ch = charArr[node];
+            if (ch>='a' && ch<='z') {
+                codes[ch - 'a'] = path.empty() ? "0" : path;
+            }
+        }
+        else {
+            //pushes right first so the left gets processed first
+            if (R!=-1) {
+                st.push({R, path+"1"});
+            }
+            if (L!=-1) {
+                st.push({L, path+"0"});
+            }
+        }
+    }
 }
 
 // Step 5: Print table and encoded message
